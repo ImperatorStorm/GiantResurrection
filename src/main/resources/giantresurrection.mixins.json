@@ -3,9 +3,9 @@
   "minVersion": "0.8",
   "package": "net.imperatorstorm.mixin",
   "compatibilityLevel": "JAVA_8",
-  "mixins": ["GiantEntityStorm"],
+  "mixins": [],
   "client": [],
-  "server": [],
+  "server": ["GiantEntityStorm"],
   "injectors": {
     "defaultRequire": 1
   }
