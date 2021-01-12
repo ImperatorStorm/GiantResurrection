@@ -33,6 +33,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoField;
+import java.util.Objects;
 
 @Mixin(GiantEntity.class)
 class GiantEntity extends HostileEntity {
@@ -171,8 +172,8 @@ class GiantEntity extends HostileEntity {
 							zombieEntity.setTarget(livingEntity);
 							zombieEntity.initialize(serverWorld, this.world.getLocalDifficulty(zombieEntity.getBlockPos()), SpawnReason.REINFORCEMENT, (EntityData)null, (CompoundTag)null);
 							serverWorld.spawnEntityAndPassengers(zombieEntity);
-							this.getAttributeInstance(EntityAttributes.ZOMBIE_SPAWN_REINFORCEMENTS).addPersistentModifier(new EntityAttributeModifier("Zombie reinforcement caller charge", -0.05000000074505806D, EntityAttributeModifier.Operation.ADDITION));
-							zombieEntity.getAttributeInstance(EntityAttributes.ZOMBIE_SPAWN_REINFORCEMENTS).addPersistentModifier(new EntityAttributeModifier("Zombie reinforcement callee charge", -0.05000000074505806D, EntityAttributeModifier.Operation.ADDITION));
+							Objects.requireNonNull(this.getAttributeInstance(EntityAttributes.ZOMBIE_SPAWN_REINFORCEMENTS)).addPersistentModifier(new EntityAttributeModifier("Zombie reinforcement caller charge", -0.05000000074505806D, EntityAttributeModifier.Operation.ADDITION));
+							Objects.requireNonNull(zombieEntity.getAttributeInstance(EntityAttributes.ZOMBIE_SPAWN_REINFORCEMENTS)).addPersistentModifier(new EntityAttributeModifier("Zombie reinforcement callee charge", -0.05000000074505806D, EntityAttributeModifier.Operation.ADDITION));
 							break;
 						}
 					}
