@@ -68,7 +68,7 @@ class GiantEntity extends HostileEntity {
 	}
 	@Inject(at=@At("HEAD"), method = ("Lnet/net/minecraft/entity/mob/GiantEntity.java"))
 	public boolean isBaby() {
-		return (Boolean)this.getDataTracker().get(BABY);
+		return this.getDataTracker().get(BABY);
 	}
 	@Inject(at=@At("HEAD"), method = ("Lnet/net/minecraft/entity/mob/GiantEntity.java"))
 	public boolean canBreakDoors() {
@@ -84,10 +84,10 @@ class GiantEntity extends HostileEntity {
 	protected void initCustomGoals() {
 		this.goalSelector.add(6, new MoveThroughVillageGoal(this, 1.0D, true, 4, this::canBreakDoors));
 		this.goalSelector.add(7, new WanderAroundFarGoal(this, 1.0D));
-		this.targetSelector.add(1, (new RevengeGoal(this, new Class[0])).setGroupRevenge(ZombifiedPiglinEntity.class));
-		this.targetSelector.add(2, new FollowTargetGoal(this, PlayerEntity.class, true));
-		this.targetSelector.add(3, new FollowTargetGoal(this, MerchantEntity.class, false));
-		this.targetSelector.add(3, new FollowTargetGoal(this, IronGolemEntity.class, true));
+		this.targetSelector.add(1, (new RevengeGoal(this)).setGroupRevenge(ZombifiedPiglinEntity.class));
+		this.targetSelector.add(2, new FollowTargetGoal<>(this, PlayerEntity.class, true));
+		this.targetSelector.add(3, new FollowTargetGoal<>(this, MerchantEntity.class, false));
+		this.targetSelector.add(3, new FollowTargetGoal<>(this, IronGolemEntity.class, true));
 	}
 	@Inject(at=@At("HEAD"), method = ("Lnet/net/minecraft/entity/mob/GiantEntity.java"))
 	protected void initDataTracker() {
@@ -96,6 +96,7 @@ class GiantEntity extends HostileEntity {
 	}
 	@Inject(at=@At("HEAD"), method = ("Lnet/net/minecraft/entity/mob/GiantEntity.java"))
 	public void onTrackedDataSet(TrackedData<?> data) {
+		assert BABY != null;
 		if (BABY.equals(data)) {
 			this.calculateDimensions();
 		}
@@ -167,10 +168,10 @@ class GiantEntity extends HostileEntity {
 					EntityType<?> entityType = zombieEntity.getType();
 					SpawnRestriction.Location location = SpawnRestriction.getLocation(entityType);
 					if (SpawnHelper.canSpawn(location, this.world, blockPos, entityType) && SpawnRestriction.canSpawn(entityType, serverWorld, SpawnReason.REINFORCEMENT, blockPos, this.world.random)) {
-						zombieEntity.updatePosition((double)m, (double)n, (double)o);
-						if (!this.world.isPlayerInRange((double)m, (double)n, (double)o, 7.0D) && this.world.intersectsEntities(zombieEntity) && this.world.isSpaceEmpty(zombieEntity) && !this.world.containsFluid(zombieEntity.getBoundingBox())) {
+						zombieEntity.updatePosition(m, n, o);
+						if (!this.world.isPlayerInRange(m, n, o, 7.0D) && this.world.intersectsEntities(zombieEntity) && this.world.isSpaceEmpty(zombieEntity) && !this.world.containsFluid(zombieEntity.getBoundingBox())) {
 							zombieEntity.setTarget(livingEntity);
-							zombieEntity.initialize(serverWorld, this.world.getLocalDifficulty(zombieEntity.getBlockPos()), SpawnReason.REINFORCEMENT, (EntityData)null, (CompoundTag)null);
+							zombieEntity.initialize(serverWorld, this.world.getLocalDifficulty(zombieEntity.getBlockPos()), SpawnReason.REINFORCEMENT, null, null);
 							serverWorld.spawnEntityAndPassengers(zombieEntity);
 							Objects.requireNonNull(this.getAttributeInstance(EntityAttributes.ZOMBIE_SPAWN_REINFORCEMENTS)).addPersistentModifier(new EntityAttributeModifier("Zombie reinforcement caller charge", -0.05000000074505806D, EntityAttributeModifier.Operation.ADDITION));
 							Objects.requireNonNull(zombieEntity.getAttributeInstance(EntityAttributes.ZOMBIE_SPAWN_REINFORCEMENTS)).addPersistentModifier(new EntityAttributeModifier("Zombie reinforcement callee charge", -0.05000000074505806D, EntityAttributeModifier.Operation.ADDITION));
@@ -253,14 +254,15 @@ class GiantEntity extends HostileEntity {
 			}
 
 			VillagerEntity villagerEntity = (VillagerEntity)livingEntity;
-			ZombieVillagerEntity zombieVillagerEntity = (ZombieVillagerEntity)villagerEntity.method_29243(EntityType.ZOMBIE_VILLAGER, false);
-			zombieVillagerEntity.initialize(serverWorld, serverWorld.getLocalDifficulty(zombieVillagerEntity.getBlockPos()), SpawnReason.CONVERSION, new ZombieEntity.ZombieData(false, true), (CompoundTag)null);
+			ZombieVillagerEntity zombieVillagerEntity = villagerEntity.method_29243(EntityType.ZOMBIE_VILLAGER, false);
+			assert zombieVillagerEntity != null;
+			zombieVillagerEntity.initialize(serverWorld, serverWorld.getLocalDifficulty(zombieVillagerEntity.getBlockPos()), SpawnReason.CONVERSION, new ZombieEntity.ZombieData(false, true), null);
 			zombieVillagerEntity.setVillagerData(villagerEntity.getVillagerData());
-			zombieVillagerEntity.setGossipData((Tag)villagerEntity.getGossip().serialize(NbtOps.INSTANCE).getValue());
+			zombieVillagerEntity.setGossipData(villagerEntity.getGossip().serialize(NbtOps.INSTANCE).getValue());
 			zombieVillagerEntity.setOfferData(villagerEntity.getOffers().toTag());
 			zombieVillagerEntity.setXp(villagerEntity.getExperience());
 			if (!this.isSilent()) {
-				serverWorld.syncWorldEvent((PlayerEntity)null, 1026, this.getBlockPos(), 0);
+				serverWorld.syncWorldEvent(null, 1026, this.getBlockPos(), 0);
 			}
 		}
 
@@ -276,7 +278,6 @@ class GiantEntity extends HostileEntity {
 		this.setCanPickUpLoot(this.random.nextFloat() < 0.55F * f);
 
 		if (entityData instanceof ZombieEntity.ZombieData) {
-			ZombieEntity.ZombieData zombieData = (ZombieEntity.ZombieData)entityData;
 
 			this.setCanBreakDoors(this.shouldBreakDoors() && this.random.nextFloat() < f * 0.1F);
 			this.initEquipment(difficulty);
@@ -294,24 +295,24 @@ class GiantEntity extends HostileEntity {
 		}
 
 		this.applyAttributeModifiers(f);
-		return (EntityData)entityData;
+		return entityData;
 	}
 	@Inject(at=@At("HEAD"), method = ("Lnet/net/minecraft/entity/mob/GiantEntity.java"))
 	protected void initAttributes() {
-		this.getAttributeInstance(EntityAttributes.ZOMBIE_SPAWN_REINFORCEMENTS).setBaseValue(this.random.nextDouble() * 0.10000000149011612D);
+		Objects.requireNonNull(this.getAttributeInstance(EntityAttributes.ZOMBIE_SPAWN_REINFORCEMENTS)).setBaseValue(this.random.nextDouble() * 0.10000000149011612D);
 	}
 	@Inject(at=@At("HEAD"), method = ("Lnet/net/minecraft/entity/mob/GiantEntity.java"))
 	protected void applyAttributeModifiers(float chanceMultiplier) {
 		this.initAttributes();
-		this.getAttributeInstance(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE).addPersistentModifier(new EntityAttributeModifier("Random spawn bonus", this.random.nextDouble() * 0.05000000074505806D, EntityAttributeModifier.Operation.ADDITION));
+		Objects.requireNonNull(this.getAttributeInstance(EntityAttributes.GENERIC_KNOCKBACK_RESISTANCE)).addPersistentModifier(new EntityAttributeModifier("Random spawn bonus", this.random.nextDouble() * 0.05000000074505806D, EntityAttributeModifier.Operation.ADDITION));
 		double d = this.random.nextDouble() * 1.5D * (double)chanceMultiplier;
 		if (d > 1.0D) {
-			this.getAttributeInstance(EntityAttributes.GENERIC_FOLLOW_RANGE).addPersistentModifier(new EntityAttributeModifier("Random zombie-spawn bonus", d, EntityAttributeModifier.Operation.MULTIPLY_TOTAL));
+			Objects.requireNonNull(this.getAttributeInstance(EntityAttributes.GENERIC_FOLLOW_RANGE)).addPersistentModifier(new EntityAttributeModifier("Random zombie-spawn bonus", d, EntityAttributeModifier.Operation.MULTIPLY_TOTAL));
 		}
 
 		if (this.random.nextFloat() < chanceMultiplier * 0.05F) {
-			this.getAttributeInstance(EntityAttributes.ZOMBIE_SPAWN_REINFORCEMENTS).addPersistentModifier(new EntityAttributeModifier("Leader zombie bonus", this.random.nextDouble() * 0.25D + 0.5D, EntityAttributeModifier.Operation.ADDITION));
-			this.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH).addPersistentModifier(new EntityAttributeModifier("Leader zombie bonus", this.random.nextDouble() * 3.0D + 1.0D, EntityAttributeModifier.Operation.MULTIPLY_TOTAL));
+			Objects.requireNonNull(this.getAttributeInstance(EntityAttributes.ZOMBIE_SPAWN_REINFORCEMENTS)).addPersistentModifier(new EntityAttributeModifier("Leader zombie bonus", this.random.nextDouble() * 0.25D + 0.5D, EntityAttributeModifier.Operation.ADDITION));
+			Objects.requireNonNull(this.getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH)).addPersistentModifier(new EntityAttributeModifier("Leader zombie bonus", this.random.nextDouble() * 3.0D + 1.0D, EntityAttributeModifier.Operation.MULTIPLY_TOTAL));
 			this.setCanBreakDoors(this.shouldBreakDoors());
 		}
 	}
